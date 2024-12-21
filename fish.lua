@@ -9,7 +9,6 @@ while true do
         sleep(5)
         goto continue
     end
-
     while true do
         local msg = ws.receive()
         if not msg then
@@ -18,7 +17,7 @@ while true do
         if msg == '0' then
             print("recieved handshake, sending cluster")
             ws.send(CLUSTER)
-            if ws.recieve == '2' then
+            if ws.recieve() == '2' then
                 if nodeID then
                     print("Node ID is configured, authing.")
                     ws.send(nodeID)
@@ -31,11 +30,20 @@ while true do
                     end
                 end
                 if ws.recieve() == "3" then
-                            
+                    storage = {}
+                    local inventories = {peripheral.find("inventory")}
+                    for _, inventory in ipairs(inventories) do
+                        local name = peripheral.getName(inventory)
+                        storage["inventories"][name] = {}
+                        for slot in pairs(inventory.list()) do
+                            storage["inventories"][name][slot] = inventory.getItemDetail(slot)
+                        end
+                    end
+                    storage["type"] = "IndexInventories"
+                    ws.send(textutils.serializeJSON(storage))
                 end
             end
         end
-
     end
     ::continue::
 end
